@@ -154,6 +154,16 @@
   @keyframes pulse{50%{opacity:.2}}
   @media (prefers-reduced-motion: reduce){ .writing::after{animation:none;} }
   .disclaimer{font-size:12.5px;color:var(--muted);margin:14px 0 0;}
+  .vary{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
+  .vary p{margin:0 0 8px;font-size:14px;font-weight:600;}
+  .vary-chips{display:flex;flex-wrap:wrap;}
+  .vary-chips button{
+    font:inherit;font-size:13.5px;margin:0 6px 6px 0;padding:5px 11px;border-radius:999px;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;
+  }
+  .vary-chips button:hover{border-color:var(--green);background:var(--green-soft);}
+  .vary-chips button:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  .vary-chips button:disabled{opacity:.5;cursor:progress;}
 
   @media (max-width:520px){
     .wrap{padding:28px 16px 48px;}
@@ -424,18 +434,46 @@ function makeCard(settingLabel, dayLabel, source){
   return {card, body, copyBtn};
 }
 
-async function generate(){
+function addVariationRow(card, ad, currentSetting, dayType){
+  const box = document.createElement('div'); box.className = 'vary';
+  const label = document.createElement('p'); label.textContent = 'Dieselbe Anzeige in einem anderen Umfeld erzählen:';
+  const chips = document.createElement('div'); chips.className = 'vary-chips';
+  SETTINGS.forEach(([value, text])=>{
+    if(value === currentSetting) return;
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = text;
+    b.addEventListener('click', ()=>{
+      const radio = document.querySelector(`input[name="setting"][value="${value}"]`);
+      if(radio) radio.checked = true;
+      generate({ad, setting:value, dayType});
+    });
+    chips.appendChild(b);
+  });
+  box.append(label, chips);
+  card.appendChild(box);
+}
+
+function setVaryDisabled(disabled){
+  document.querySelectorAll('.vary-chips button').forEach(b=>b.disabled = disabled);
+}
+
+let lastAd = '';
+
+async function generate(opts){
   if(busy) return;
-  const ad = adEl.value.trim();
+  opts = opts || {};
+  let ad = (opts.ad || adEl.value || '').trim();
+  if(ad.length < 80 && lastAd) ad = lastAd;
   if(ad.length < 80){ setMsg('Bitte zuerst den vollständigen Text einer Stellenanzeige einfügen.', true); adEl.focus(); return; }
+  lastAd = ad;
   const accessCode = $('code').value.trim();
   if(accessCodeRequired && !accessCode){ setMsg('Bitte den Zugangscode aus dem Workshop eingeben.', true); $('code').focus(); return; }
   try{ if(accessCode) localStorage.setItem('tagimjob-code', accessCode); }catch(e){}
 
-  const setting = checked('setting'), dayType = checked('daytype');
-  busy = true; goBtn.disabled = true; goBtn.textContent = 'Wird erzählt …'; setMsg('');
+  const setting = opts.setting || checked('setting'), dayType = opts.dayType || checked('daytype');
+  busy = true; goBtn.disabled = true; goBtn.textContent = 'Wird erzählt …'; setMsg(''); setVaryDisabled(true);
   const {card, body, copyBtn} = makeCard(labelOf(SETTINGS,setting), labelOf(DAY_TYPES,dayType), adSourceLine(ad));
   renderBody(body, '', false);
+  if(opts.ad) card.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
   let raw = '';
 
   try{
@@ -461,11 +499,12 @@ async function generate(){
     raw += decoder.decode();
     if(!raw.trim()) throw new Error('Die KI hat keinen Text geliefert. Bitte noch einmal versuchen.');
     renderBody(body, raw, true);
+    addVariationRow(card, ad, setting, dayType);
     copyBtn.addEventListener('click', async ()=>{
       try{ await navigator.clipboard.writeText(raw.trim()); copyBtn.textContent='Kopiert'; setTimeout(()=>copyBtn.textContent='Kopieren',1500); }
       catch(e){ copyBtn.textContent='Nicht möglich'; }
     });
-    setMsg('Fertig. Wähle ein anderes Umfeld und erzähle denselben Tag noch einmal zum Vergleich.');
+    setMsg('Fertig. Unter der Erzählung kannst du dieselbe Anzeige mit einem Klick in einem anderen Umfeld erzählen lassen.');
   }catch(err){
     card.remove();
     if(!document.querySelector('.day')) {
@@ -475,10 +514,10 @@ async function generate(){
     }
     setMsg(err.message, true);
   }finally{
-    busy = false; goBtn.disabled = false; goBtn.textContent = 'Arbeitstag erzählen';
+    busy = false; goBtn.disabled = false; goBtn.textContent = 'Arbeitstag erzählen'; setVaryDisabled(false);
   }
 }
-goBtn.addEventListener('click', generate);
+goBtn.addEventListener('click', ()=>generate());
 updateCount();
 </script>
 </body>
