@@ -1,0 +1,6 @@
+{
+  "name": "tag-im-job",
+  "private": true,
+  "type": "module",
+  "description": "Workshop-Tool: Aus einer Stellenanzeige einen Arbeitstag in verschiedenen Arbeitsumfeldern erzählen lassen (Mistral API)"
+}

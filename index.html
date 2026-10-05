@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ein Tag in dieser Stelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDF1EE;
+    --surface:#FFFFFF;
+    --ink:#1D2826;
+    --muted:#5B6763;
+    --line:#D3DBD6;
+    --green:#5E8F25;
+    --green-soft:#E3EED3;
+    --blue:#2F78AE;
+    --blue-soft:#E1ECF5;
+    --danger:#A33A2B;
+    --serif:"Literata", Georgia, "Times New Roman", serif;
+    --sans:"Work Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141A19; --surface:#1D2523; --ink:#E7ECE9; --muted:#9AA6A1; --line:#33403C;
+      --green:#9CC65E; --green-soft:#26331B; --blue:#7FB5E0; --blue-soft:#1C2B37; --danger:#E08A7C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141A19; --surface:#1D2523; --ink:#E7ECE9; --muted:#9AA6A1; --line:#33403C;
+    --green:#9CC65E; --green-soft:#26331B; --blue:#7FB5E0; --blue-soft:#1C2B37; --danger:#E08A7C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.5;
+    padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 64px;}
+  .intro{max-width:760px;margin-bottom:36px;}
+  .intro h1{
+    font-family:var(--serif); font-weight:700;
+    font-size:clamp(30px,4.6vw,48px); line-height:1.08; letter-spacing:-0.01em;
+    margin:0 0 14px;
+  }
+  .intro p{margin:0;color:var(--muted);font-size:17px;max-width:62ch;}
+
+  .layout{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:32px;align-items:start;}
+  @media (max-width:880px){ .layout{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:22px; position:sticky; top:20px;
+  }
+  @media (max-width:880px){ .panel{position:static;} }
+  .field{margin-bottom:22px;}
+  .field > label, fieldset legend{
+    display:block; font-weight:600; font-size:15px; margin-bottom:8px; padding:0;
+  }
+  fieldset{border:0;margin:0 0 22px;padding:0;}
+  textarea, input[type=text], input[type=password]{
+    width:100%; font:inherit; color:var(--ink); background:var(--bg);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+  }
+  textarea{min-height:180px;resize:vertical;font-size:14.5px;line-height:1.45;}
+  textarea:focus, input:focus{outline:2px solid var(--blue);outline-offset:1px;}
+  .subrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:13.5px;color:var(--muted);flex-wrap:wrap;}
+  .filebtn{
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    color:var(--blue);font-weight:500;
+  }
+  .filebtn input{position:absolute;opacity:0;width:1px;height:1px;}
+  .filebtn:focus-within{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px;}
+  .count.warn{color:var(--danger);}
+
+  .choices{display:flex;flex-wrap:wrap;gap:8px;}
+  .choice{position:relative;}
+  .choice input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;}
+  .choice span{
+    display:inline-block;padding:7px 12px;border-radius:999px;
+    border:1px solid var(--line);background:var(--surface);font-size:14px;cursor:pointer;
+  }
+  .choice input:checked + span{background:var(--green-soft);border-color:var(--green);color:var(--ink);font-weight:600;}
+  .choice input:focus-visible + span{outline:2px solid var(--blue);outline-offset:2px;}
+
+  .primary{
+    width:100%; font:inherit; font-weight:600; font-size:16px;
+    background:var(--green); color:#fff; border:0; border-radius:10px;
+    padding:13px 16px; cursor:pointer;
+  }
+  :root[data-theme="dark"] .primary{color:#11170F;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .primary{color:#11170F;} }
+  .primary:disabled{opacity:.55;cursor:progress;}
+  .primary:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
+  .msg{min-height:1.4em;margin:10px 0 0;font-size:14px;}
+  .msg.error{color:var(--danger);}
+  .fineprint{font-size:12.5px;color:var(--muted);margin:16px 0 0;line-height:1.45;}
+  .banner{
+    background:var(--blue-soft);border:1px solid var(--blue);border-radius:10px;
+    padding:12px 14px;font-size:14px;margin-bottom:18px;
+  }
+
+  .results{display:flex;flex-direction:column;gap:28px;}
+  .empty{
+    border:1.5px dashed var(--line);border-radius:14px;padding:40px 28px;color:var(--muted);
+    font-family:var(--serif);font-size:19px;line-height:1.5;
+  }
+
+  .day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 28px 24px;}
+  .day-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-size:13px;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);}
+  .tag.env{background:var(--green-soft);border-color:var(--green);font-weight:600;}
+  .day-actions{display:flex;gap:4px;}
+  .ghost{
+    font:inherit;font-size:13.5px;background:none;border:0;color:var(--blue);
+    padding:4px 8px;border-radius:6px;cursor:pointer;
+  }
+  .ghost:hover{background:var(--blue-soft);}
+  .ghost:focus-visible{outline:2px solid var(--blue);}
+  .source{font-size:13px;color:var(--muted);margin:6px 0 0;}
+  .day-title{
+    font-family:var(--serif);font-weight:600;font-size:clamp(22px,2.6vw,28px);
+    line-height:1.2;margin:14px 0 20px;
+  }
+  .timeline{list-style:none;margin:0;padding:0;position:relative;}
+  .timeline::before{
+    content:"";position:absolute;left:68px;top:6px;bottom:6px;width:2px;background:var(--green-soft);
+  }
+  .timeline li{display:flex;padding:0 0 18px;position:relative;}
+  .timeline li .time{flex:0 0 56px;margin-right:26px;}
+  .timeline li p{flex:1 1 auto;min-width:0;}
+  .timeline li::after{
+    content:"";position:absolute;left:64px;top:9px;width:10px;height:10px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--green);
+  }
+  .time{
+    font-family:var(--serif);font-weight:700;font-size:17px;color:var(--green);
+    font-variant-numeric:tabular-nums;text-align:right;line-height:1.55;
+  }
+  .timeline p{margin:0;font-family:var(--serif);font-size:16.5px;line-height:1.62;max-width:64ch;}
+  .plain{font-family:var(--serif);font-size:16.5px;line-height:1.62;margin:0 0 12px;max-width:64ch;}
+  .note{
+    margin-top:10px;padding:16px 18px;border-radius:10px;background:var(--blue-soft);
+  }
+  .note h3{margin:0 0 8px;font-size:15px;font-weight:600;}
+  .note ul{margin:0;padding-left:18px;}
+  .note li{margin:0 0 6px;font-size:15px;}
+  .writing{color:var(--muted);font-size:14px;margin-top:6px;}
+  .writing::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--green);animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:.2}}
+  @media (prefers-reduced-motion: reduce){ .writing::after{animation:none;} }
+  .disclaimer{font-size:12.5px;color:var(--muted);margin:14px 0 0;}
+
+  @media (max-width:520px){
+    .wrap{padding:28px 16px 48px;}
+    .day{padding:20px 18px;}
+    .timeline::before{left:52px;}
+    .timeline li .time{flex-basis:44px;margin-right:20px;}
+    .timeline li::after{left:48px;}
+    .time{font-size:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <h1>Wie fühlt sich diese Stelle an einem Dienstag an?</h1>
+    <p>Füge eine Stellenanzeige ein und lies, wie ein Arbeitstag in dieser Rolle aussehen könnte. Dann spielst du dieselbe Anzeige in einem anderen Arbeitsumfeld durch und vergleichst: Was bleibt gleich, was fühlt sich ganz anders an?</p>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-label="Eingabe">
+      <div id="banner" class="banner" hidden></div>
+
+      <div class="field">
+        <label for="ad">Stellenanzeige</label>
+        <textarea id="ad" placeholder="Text der Stellenanzeige hier einfügen …"></textarea>
+        <div class="subrow">
+          <label class="filebtn">Datei laden (PDF, Word, TXT)
+            <input type="file" id="file" accept=".pdf,.docx,.txt,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          </label>
+          <span id="count" class="count">0 Zeichen</span>
+        </div>
+        <div id="fileStatus" class="subrow" aria-live="polite"></div>
+      </div>
+
+      <fieldset>
+        <legend>In welchem Umfeld?</legend>
+        <div class="choices" id="settings"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Was für ein Tag?</legend>
+        <div class="choices" id="daytypes"></div>
+      </fieldset>
+
+      <div class="field" id="codeField" hidden>
+        <label for="code">Zugangscode aus dem Workshop</label>
+        <input type="password" id="code" autocomplete="off">
+      </div>
+
+      <button class="primary" id="go" type="button">Arbeitstag erzählen</button>
+      <p class="msg" id="msg" role="status"></p>
+
+      <p class="fineprint">Der Text wird zur Verarbeitung an Mistral AI übermittelt. Bitte keine personenbezogenen Daten eintragen. Die Erzählungen sind fiktive Zuspitzungen auf Basis der Anzeige, keine Aussagen über den echten Arbeitgeber.</p>
+    </section>
+
+    <section class="results" id="results" aria-live="polite" aria-label="Erzählte Arbeitstage">
+      <div class="empty" id="empty">Hier erscheinen die erzählten Arbeitstage. Der neueste steht oben, ältere bleiben zum Vergleichen stehen.</div>
+    </section>
+  </main>
+</div>
+
+<script>
+const SETTINGS = [
+  ['original','Wie in der Anzeige'],
+  ['konzern','Globaler Konzern'],
+  ['kmu','Mittelstand (KMU)'],
+  ['oeffentlich','Öffentlicher Dienst'],
+  ['hochschule','Hochschule / Wissenschaft'],
+  ['ngo','NGO / Stiftung'],
+  ['startup','Start-up'],
+  ['freelance','Freiberuflich / eigene Firma']
+];
+const DAY_TYPES = [
+  ['normal','Normaler Tag'],
+  ['deadline','Heiße Phase vor einer Deadline'],
+  ['start','Erster Monat im Job']
+];
+const MAX_CHARS = 12000;
+
+const $ = id => document.getElementById(id);
+const adEl = $('ad'), goBtn = $('go'), msgEl = $('msg');
+let accessCodeRequired = false;
+let busy = false;
+
+function buildChoices(containerId, name, items, checkedValue){
+  const box = $(containerId);
+  items.forEach(([value,label])=>{
+    const wrap = document.createElement('label');
+    wrap.className = 'choice';
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = name; input.value = value;
+    if(value === checkedValue) input.checked = true;
+    const span = document.createElement('span');
+    span.textContent = label;
+    wrap.append(input, span);
+    box.appendChild(wrap);
+  });
+}
+buildChoices('settings','setting',SETTINGS,'original');
+buildChoices('daytypes','daytype',DAY_TYPES,'normal');
+
+const labelOf = (list, v) => (list.find(x=>x[0]===v)||['',''])[1];
+const checked = name => (document.querySelector(`input[name="${name}"]:checked`)||{}).value;
+
+function updateCount(){
+  const n = adEl.value.length;
+  const el = $('count');
+  el.textContent = n.toLocaleString('de-DE') + ' Zeichen' + (n > MAX_CHARS ? ' – wird gekürzt' : '');
+  el.classList.toggle('warn', n > MAX_CHARS);
+}
+adEl.addEventListener('input', updateCount);
+
+function setMsg(text, isError){
+  msgEl.textContent = text || '';
+  msgEl.classList.toggle('error', !!isError);
+}
+
+// ---- Zugangscode merken (nur im eigenen Browser) ----
+try { $('code').value = localStorage.getItem('tagimjob-code') || ''; } catch(e){}
+
+// ---- Server-Status ----
+async function checkServer(){
+  try{
+    const r = await fetch('/api/generate', {method:'GET'});
+    if(!r.ok) throw new Error('status');
+    const s = await r.json();
+    accessCodeRequired = !!s.accessCodeRequired;
+    $('codeField').hidden = !accessCodeRequired;
+    if(!s.configured){
+      showBanner('Auf dem Server ist noch kein Mistral-Schlüssel hinterlegt. In Vercel unter Settings → Environment Variables den Eintrag MISTRAL_API_KEY anlegen und neu deployen.');
+    }
+  }catch(e){
+    showBanner('Die Server-Funktion ist nicht erreichbar. Die Seite funktioniert erst, wenn sie auf Vercel läuft (nicht als lokal geöffnete Datei).');
+  }
+}
+function showBanner(text){ const b=$('banner'); b.textContent=text; b.hidden=false; }
+checkServer();
+
+// ---- Dateien einlesen ----
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    if(document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = ()=>reject(new Error('Bibliothek konnte nicht geladen werden'));
+    document.head.appendChild(s);
+  });
+}
+async function readPdf(file){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await window.pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  const pages = [];
+  for(let i=1;i<=pdf.numPages;i++){
+    const content = await (await pdf.getPage(i)).getTextContent();
+    pages.push(content.items.map(it=>it.str + (it.hasEOL ? '\n' : ' ')).join(''));
+  }
+  return pages.join('\n\n');
+}
+async function readDocx(file){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  const res = await window.mammoth.extractRawText({arrayBuffer: await file.arrayBuffer()});
+  return res.value;
+}
+$('file').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  const status = $('fileStatus');
+  if(!file) return;
+  status.textContent = 'Lese „' + file.name + '“ …';
+  try{
+    const name = file.name.toLowerCase();
+    let text;
+    if(name.endsWith('.pdf')) text = await readPdf(file);
+    else if(name.endsWith('.docx')) text = await readDocx(file);
+    else text = await file.text();
+    text = text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(text.length < 80){
+      status.textContent = 'In der Datei war kaum Text zu finden. Bei gescannten PDFs bitte den Text kopieren und einfügen.';
+    }else{
+      adEl.value = text; updateCount();
+      status.textContent = '„' + file.name + '“ geladen. Kurz prüfen, ob der Text vollständig ist.';
+    }
+  }catch(err){
+    status.textContent = 'Die Datei ließ sich nicht lesen. Bitte den Text kopieren und oben einfügen.';
+  }
+  e.target.value = '';
+});
+
+// ---- Antwort zerlegen ----
+function parseDay(raw){
+  const out = {title:'', entries:[], notes:[], plain:[]};
+  let inNotes = false;
+  raw.replace(/\r/g,'').split('\n').forEach(line=>{
+    const t = line.replace(/\*\*/g,'').replace(/^#+\s*/,'').trim();
+    if(!t) return;
+    let m;
+    if((m = t.match(/^TITEL\s*:\s*(.*)$/i))){ out.title = m[1].replace(/^["„]|["“]$/g,''); return; }
+    if(/^EINORDNUNG\s*:?\s*$/i.test(t)){ inNotes = true; return; }
+    if(inNotes){
+      out.notes.push(t.replace(/^[-•*]\s*/,''));
+      return;
+    }
+    if((m = t.match(/^(\d{1,2}[:.]\d{2})\s*(?:Uhr)?\s*[–—-]\s*(.*)$/))){
+      out.entries.push({time:m[1].replace('.',':'), text:m[2]});
+      return;
+    }
+    if(out.entries.length) out.entries[out.entries.length-1].text += ' ' + t;
+    else out.plain.push(t);
+  });
+  return out;
+}
+
+function renderBody(container, raw, done){
+  const d = parseDay(raw);
+  container.textContent = '';
+  if(d.title){
+    const h = document.createElement('h2'); h.className='day-title'; h.textContent = d.title;
+    container.appendChild(h);
+  }
+  d.plain.forEach(p=>{ const el=document.createElement('p'); el.className='plain'; el.textContent=p; container.appendChild(el); });
+  if(d.entries.length){
+    const ol = document.createElement('ol'); ol.className='timeline';
+    d.entries.forEach(en=>{
+      const li = document.createElement('li');
+      const time = document.createElement('span'); time.className='time'; time.textContent = en.time;
+      const p = document.createElement('p'); p.textContent = en.text;
+      li.append(time,p); ol.appendChild(li);
+    });
+    container.appendChild(ol);
+  }
+  if(d.notes.length){
+    const aside = document.createElement('aside'); aside.className='note';
+    const h3 = document.createElement('h3'); h3.textContent = 'Kurz eingeordnet';
+    const ul = document.createElement('ul');
+    d.notes.forEach(n=>{ const li=document.createElement('li'); li.textContent=n; ul.appendChild(li); });
+    aside.append(h3,ul); container.appendChild(aside);
+  }
+  if(!done){
+    const w = document.createElement('div'); w.className='writing';
+    w.textContent = raw ? 'wird weitererzählt' : 'Der Tag wird erzählt';
+    container.appendChild(w);
+  }
+}
+
+function adSourceLine(text){
+  const first = text.split('\n').map(s=>s.trim()).find(s=>s.length>3) || '';
+  return first.length > 70 ? first.slice(0,70) + ' …' : first;
+}
+
+function makeCard(settingLabel, dayLabel, source){
+  $('empty')?.remove();
+  const card = document.createElement('article'); card.className='day';
+  const head = document.createElement('div'); head.className='day-head';
+  const tags = document.createElement('div'); tags.className='tags';
+  const t1 = document.createElement('span'); t1.className='tag env'; t1.textContent = settingLabel;
+  const t2 = document.createElement('span'); t2.className='tag'; t2.textContent = dayLabel;
+  tags.append(t1,t2);
+  const actions = document.createElement('div'); actions.className='day-actions';
+  const copyBtn = document.createElement('button'); copyBtn.className='ghost'; copyBtn.type='button'; copyBtn.textContent='Kopieren';
+  const delBtn = document.createElement('button'); delBtn.className='ghost'; delBtn.type='button'; delBtn.textContent='Entfernen';
+  actions.append(copyBtn, delBtn);
+  head.append(tags, actions);
+  const src = document.createElement('p'); src.className='source'; src.textContent = 'Anzeige: ' + source;
+  const body = document.createElement('div');
+  const disc = document.createElement('p'); disc.className='disclaimer'; disc.textContent='Fiktive Zuspitzung auf Basis der Anzeige – erzeugt mit KI.';
+  card.append(head, src, body, disc);
+  $('results').prepend(card);
+  delBtn.addEventListener('click', ()=>card.remove());
+  return {card, body, copyBtn};
+}
+
+async function generate(){
+  if(busy) return;
+  const ad = adEl.value.trim();
+  if(ad.length < 80){ setMsg('Bitte zuerst den vollständigen Text einer Stellenanzeige einfügen.', true); adEl.focus(); return; }
+  const accessCode = $('code').value.trim();
+  if(accessCodeRequired && !accessCode){ setMsg('Bitte den Zugangscode aus dem Workshop eingeben.', true); $('code').focus(); return; }
+  try{ if(accessCode) localStorage.setItem('tagimjob-code', accessCode); }catch(e){}
+
+  const setting = checked('setting'), dayType = checked('daytype');
+  busy = true; goBtn.disabled = true; goBtn.textContent = 'Wird erzählt …'; setMsg('');
+  const {card, body, copyBtn} = makeCard(labelOf(SETTINGS,setting), labelOf(DAY_TYPES,dayType), adSourceLine(ad));
+  renderBody(body, '', false);
+  let raw = '';
+
+  try{
+    const res = await fetch('/api/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ad, setting, dayType, accessCode})
+    });
+    if(!res.ok){
+      let data = {}; try{ data = await res.json(); }catch(e){}
+      if(data.code === 'access'){ $('codeField').hidden = false; accessCodeRequired = true; $('code').focus(); }
+      throw new Error(data.error || 'Es kam keine Antwort. Bitte noch einmal versuchen.');
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let last = 0;
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      raw += decoder.decode(value, {stream:true});
+      const now = Date.now();
+      if(now - last > 120){ renderBody(body, raw, false); last = now; }
+    }
+    raw += decoder.decode();
+    if(!raw.trim()) throw new Error('Die KI hat keinen Text geliefert. Bitte noch einmal versuchen.');
+    renderBody(body, raw, true);
+    copyBtn.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(raw.trim()); copyBtn.textContent='Kopiert'; setTimeout(()=>copyBtn.textContent='Kopieren',1500); }
+      catch(e){ copyBtn.textContent='Nicht möglich'; }
+    });
+    setMsg('Fertig. Wähle ein anderes Umfeld und erzähle denselben Tag noch einmal zum Vergleich.');
+  }catch(err){
+    card.remove();
+    if(!document.querySelector('.day')) {
+      const e = document.createElement('div'); e.className='empty'; e.id='empty';
+      e.textContent = 'Hier erscheinen die erzählten Arbeitstage. Der neueste steht oben, ältere bleiben zum Vergleichen stehen.';
+      $('results').appendChild(e);
+    }
+    setMsg(err.message, true);
+  }finally{
+    busy = false; goBtn.disabled = false; goBtn.textContent = 'Arbeitstag erzählen';
+  }
+}
+goBtn.addEventListener('click', generate);
+updateCount();
+</script>
+</body>
+</html>
